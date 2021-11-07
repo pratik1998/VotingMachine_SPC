@@ -127,22 +127,27 @@ void deleteElection(sqlite3 *db, _id_t election) {
    sqlite3_finalize(stmt);
 }
 
-void getVoter(sqlite3 *db, _id_t voter_id, Registration* dest) {
+int getVoter(sqlite3 *db, _id_t voter_id, Registration* dest) {
    sqlite3_stmt *stmt;
+   int flag = 0;
    const char *sql = "SELECT name,county,zip,dob_day,dob_mon,dob_year\
                       FROM Registration WHERE id=?";
    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
    sqlite3_bind_int(stmt, 1, voter_id);
-   sqlite3_step(stmt);
-   strncpy(dest->name, (char *)sqlite3_column_text(stmt, 0), MAX_NAME_LEN-1);
-   strncpy(dest->county, (char *)sqlite3_column_text(stmt, 1),MAX_NAME_LEN-1);
-   (dest->name)[MAX_NAME_LEN-1] = '\0';
-   (dest->county)[MAX_NAME_LEN-1] = '\0';
-   dest->zip = sqlite3_column_int(stmt, 2);
-   (dest->dob).day = sqlite3_column_int(stmt, 3);
-   (dest->dob).month = sqlite3_column_int(stmt, 4);
-   (dest->dob).year = sqlite3_column_int(stmt, 5);
+   if(sqlite3_step(stmt)==100){
+      flag = 1;
+      strncpy(dest->name, (char *)sqlite3_column_text(stmt, 0), MAX_NAME_LEN-1);
+      strncpy(dest->county, (char *)sqlite3_column_text(stmt, 1),MAX_NAME_LEN-1);
+      (dest->name)[MAX_NAME_LEN-1] = '\0';
+      (dest->county)[MAX_NAME_LEN-1] = '\0';
+      dest->zip = sqlite3_column_int(stmt, 2);
+      (dest->dob).day = sqlite3_column_int(stmt, 3);
+      (dest->dob).month = sqlite3_column_int(stmt, 4);
+      (dest->dob).year = sqlite3_column_int(stmt, 5);
+   }  
+   
    sqlite3_finalize(stmt);
+   return flag;
 }
 
 void getElection(sqlite3 *db, _id_t election_id, Election* dest) {

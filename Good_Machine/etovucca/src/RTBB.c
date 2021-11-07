@@ -250,7 +250,10 @@ bool isEligible(_id_t election_id, _id_t office_id, _id_t voter_id) {
    Election election;
    Date today;
    getDate(&today);
-   getVoter(db, voter_id, &registration);
+   if(getVoter(db, voter_id, &registration)==0){
+      printf("No Such Voter\n");
+      return false;
+   }
    if (getVote(db, voter_id, office_id) > 0) {
       printf("Already voted\n");
       return false;
