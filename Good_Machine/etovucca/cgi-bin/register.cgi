@@ -8,7 +8,7 @@ from os import environ
 PATH_TO_MACHINE = "./etovucca"
 
 def render_header():
-    print("Content-Type: text/html")
+    print('Content-Type: text/html')
     print()
     print('<link rel="stylesheet" href="https://spar.isi.jhu.edu/teaching/443/main.css">')
     print('<h2 id="dlobeid-etovucca-voting-machine">DLOBEID EtovUcca Voting Machine</h2>')
@@ -38,17 +38,17 @@ query_string = cgi.parse_qs(environ['QUERY_STRING'])
 
 if query_string:
     voter_name = cgi.escape(query_string.get('name',[''])[0])
-    county = cgi.escape(query_string.get('county', '')[0])
-    zipc = cgi.escape(query_string.get('zipc', '')[0])
-    dob = cgi.escape(query_string.get('dob', '')[0])
+    county = cgi.escape(query_string.get('county', [''])[0])
+    zipc = cgi.escape(query_string.get('zipc', [''])[0])
+    dob = cgi.escape(query_string.get('dob', [''])[0])
     if voter_name and county and zipc and dob:
         voter_id = subprocess.check_output([PATH_TO_MACHINE, 'add-voter', voter_name, county, zipc, dob]).decode('utf-8').rstrip()
         if voter_id is not "0":
             render_voting_page()
-            print("<b>Voter registered. ID: " + str(voter_id) + "</b>")
+            print('<b>Voter registered. ID: {} </b>'.format(voter_id))
         else:
             render_voting_page()
-            print("<b>Error in registering voter. Please try again.</b>")
+            print('<b>Error in registering voter. Please try again.</b>')
     else:
         render_voting_page(invalid=True)
 else:
