@@ -96,11 +96,14 @@ try:
             print('<b>Successfully added election {}</b>'.format(form.getvalue('addElection')))
         elif 'addOffice' in form:
             election_id = convert_date_to_id(form.getvalue('election'))
-            subprocess.check_output([PATH_TO_MACHINE, 'add-office', str(election_id), form.getvalue('addOffice')])
-            print('<b>Successfully added {} to election {}</b>'.format(form.getvalue('addOffice'), form.getvalue('election')))
+            office_name = cgi.escape(form.getvalue('addOffice'))
+            subprocess.check_output([PATH_TO_MACHINE, 'add-office', str(election_id), office_name])
+            print('<b>Successfully added {} to election {}</b>'.format(office_name, form.getvalue('election')))
         elif 'addCandidate' in form:
-            subprocess.check_output([PATH_TO_MACHINE, 'add-candidate', form.getvalue('office'), form.getvalue('addCandidate')])
-            print('<b>Successfully added candidate {} to office {}</b>'.format(form.getvalue('addCandidate'), form.getvalue('office')))
+            candiate_name = cgi.escape(form.getvalue('addCandidate'))
+            office_name = cgi.escape(form.getvalue('office'))
+            subprocess.check_output([PATH_TO_MACHINE, 'add-candidate', office_name, candiate_name])
+            print('<b>Successfully added candidate {} to office {}</b>'.format(candiate_name, office_name))
         elif 'addZip' in form:
             subprocess.check_output([PATH_TO_MACHINE, 'add-zip', form.getvalue('office'), form.getvalue('addZip')])
             print('<b>Successfully added ZIP {} to office {}</b>'.format(form.getvalue('addZip'), form.getvalue('office')))
