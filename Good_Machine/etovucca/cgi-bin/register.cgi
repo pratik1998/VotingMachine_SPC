@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import cgi
-import cgitb
-cgitb.enable()
 import subprocess
 import json
 from os import environ
