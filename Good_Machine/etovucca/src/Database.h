@@ -30,7 +30,7 @@ void storeStatus(sqlite3 *db, _id_t election, Status);
 
 void deleteElection(sqlite3 *db, _id_t election);
 
-void getVoter(sqlite3 *db, _id_t voter_id, Registration*);
+int getVoter(sqlite3 *db, _id_t voter_id, Registration*);
 
 void getElection(sqlite3 *db, _id_t election_id, Election*);
 
