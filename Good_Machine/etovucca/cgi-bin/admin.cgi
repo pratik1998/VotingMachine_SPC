@@ -15,8 +15,14 @@ ID_SQL = 'SELECT id FROM Election WHERE deadline_day={} AND deadline_mon={} AND 
 def convert_date_to_id(date):
     # Please don't ever actually do this.
     date_positions = date.split("-")
-    sql = ID_SQL.format(date_positions[2], date_positions[1], int(date_positions[0]) - 1900) # U+1F914
-    election_id = int(subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql]))
+    try:
+        day_int = int(date_positions[2])
+        mon_int = int(date_positions[1])
+        year_int = int(date_positions[0])
+        sql = ID_SQL.format(day_int, mon_int, year_int - 1900)
+        election_id = int(subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql]))
+    except ValueError as e:
+        election_id = ''
     return election_id
 
 def render_elections(elections, status):
