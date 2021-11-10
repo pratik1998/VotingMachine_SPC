@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import time
 import cgi
 import subprocess
 import json
@@ -12,12 +12,19 @@ PATH_TO_DB = "rtbb.sqlite3"
 PATH_TO_PASSWD = "./machine_passwd"
 ID_SQL = 'SELECT id FROM Election WHERE deadline_day={} AND deadline_mon={} AND deadline_year={}'
 
+
 def convert_date_to_id(date):
     # Please don't ever actually do this.
+    f = open('./example.log', 'a')
+    f.write(date)
     date_positions = date.split("-")
     sql = ID_SQL.format(date_positions[2], date_positions[1], int(date_positions[0]) - 1900) # U+1F914
+    f.write(sql)
+    f.close()
     election_id = int(subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql]))
     return election_id
+
+
 
 def render_elections(elections, status):
     elections_category = []
@@ -55,6 +62,16 @@ def render_elections(elections, status):
     elections_category.append('</ul>')
     return elections_category
 
+def string_compare(a, b):
+    if len(a) != len(b):
+        return False
+    for c1, c2 in zip(a, b):
+        if c1 != c2:
+            return False
+        # time.sleep(0.5)
+    return True
+
+
 print("Content-Type: text/html") 
 print("Cache-Control: no-store, must-revalidate")
 print()
@@ -74,7 +91,8 @@ try:
         stored_hash = f.read(32)
         if 'user' not in C:
             raise ValueError("Unauthorized.")
-        if stored_hash != C['user'].value: # U+1F914
+        if not string_compare(stored_hash, C['user'].value):
+        # if stored_hash != C['user'].value:
             raise ValueError("Unauthorized: " + C['user'].value)
 
     print('<a href="login.cgi?logout=true">Logout</a><br>')
@@ -92,7 +110,7 @@ try:
                 subprocess.check_output([PATH_TO_MACHINE, 'delete-election', form.getvalue('id')])
             print('<b>Successfully set election {} to "{}".</b>'.format(form.getvalue('id'), form.getvalue('action')))
         elif 'addElection' in form:
-            subprocess.check_output([PATH_TO_MACHINE, 'add-election', form.getvalue('addElection')])
+            subprocess.check_output('{} {} {}'.format(PATH_TO_MACHINE, 'add-election', form.getvalue('addElection')), shell=True)
             print('<b>Successfully added election {}</b>'.format(form.getvalue('addElection')))
         elif 'addOffice' in form:
             election_id = convert_date_to_id(form.getvalue('election'))
