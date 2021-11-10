@@ -67,7 +67,7 @@ def str_compare(a, b):
         return False
     result = 0
     for c1, c2 in zip(a, b):
-        result |= ord(a) ^ ord(b)
+        result |= ord(c1) ^ ord(c2)
     return result == 0
 
 print("Content-Type: text/html") 
