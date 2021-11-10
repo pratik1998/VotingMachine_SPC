@@ -3,6 +3,7 @@
 import cgi
 import subprocess
 import json
+import hashlib
 from os import environ
 from http.cookies import SimpleCookie
 
@@ -104,6 +105,13 @@ try:
         elif 'addZip' in form:
             subprocess.check_output([PATH_TO_MACHINE, 'add-zip', form.getvalue('office'), form.getvalue('addZip')])
             print('<b>Successfully added ZIP {} to office {}</b>'.format(form.getvalue('addZip'), form.getvalue('office')))
+        elif 'newpasswd' in form:
+            h = hashlib.new('md5')
+            h.update(form.getvalue('newpasswd').encode('utf-8'))
+            f = open(PATH_TO_PASSWD, "w")
+            f.write(h.hexdigest())
+            f.close()
+            print('<b>Successfully reset password</b>')
 
     json_elections = subprocess.check_output([PATH_TO_MACHINE, "get-elections"]).decode('utf-8')
     elections = json.loads(json_elections)
@@ -169,6 +177,14 @@ try:
     print('<input type="text" id="addCandidate" name="addCandidate"><br>')
     print('<input type="submit" value="Add Candidate">')
     print('</form>') 
+
+    # reset password
+    print('<h3>Reset Password</h3>')
+    print('<form method="post">')
+    print('<label for="passwd">Admin New Password:</label>')
+    print('<input type="password" id="newpasswd" name="newpasswd"><br>')
+    print('<input type="submit" value="Reset">')
+    print('</form>')
 
     print('<hr>')
 
