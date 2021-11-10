@@ -1,39 +1,68 @@
-#!/bin/bash
-PATH_TO_MACHINE=./etovucca
+#!/usr/bin/env python3
 
-render_register() {
-    echo "Content-Type: text/html"
-    echo ""
-    echo ""
-    echo "<link rel='stylesheet' href='https://spar.isi.jhu.edu/teaching/443/main.css'>"
-    echo '<h2 id="dlobeid-etovucca-voting-machine">DLOBEID EtovUcca Voting Machine</h2><h1 id="voter-registration">Voter Registration</h1><br><form><label for="name">Voter Name</label><br> <input type="text" id="name" name="name"><br> <label for="county">County</label><br> <input type="text" id="county" name="county"><br> <label for="zipc">ZIP Code</label><br> <input type="number" id="zipc" name="zipc"><br> <label for="dob">Date of Birth</label><br> <input type="date" id="dob" name="dob"><br> <input type="submit" value="Submit"></form>'
-    echo '<a href="./home.cgi">Return to Homepage</a><br>'
-}
+import cgi
+import subprocess
+import json
+from os import environ
+import re
 
-register_voter() {
-    id=`$PATH_TO_MACHINE add-voter ${array[name]} ${array[county]} ${array[zipc]} ${array[dob]}`
-    if [ ! $id -eq 0 ]; then
-        echo "<b>Voter registered. ID: $id</b>"
-    else
-        echo "<b>Error in registering voter. Please try again.</b>"
-    fi
-}
+PATH_TO_MACHINE = "./etovucca"
 
-render_register
+def render_header():
+    print('Content-Type: text/html')
+    print()
+    print('<link rel="stylesheet" href="https://spar.isi.jhu.edu/teaching/443/main.css">')
+    print('<h2 id="dlobeid-etovucca-voting-machine">DLOBEID EtovUcca Voting Machine</h2>')
+    print('<h1 id="voter-registration">Voter Registration</h1><br>')
 
-if [ ! -z $QUERY_STRING ]; then
-    # Parsing code from https://stackoverflow.com/a/3919908
-    saveIFS=$IFS
-    IFS='=&'
-    parm=($QUERY_STRING)
-    IFS=$saveIFS
-    declare -A array
-    for ((i=0; i<${#parm[@]}; i+=2))
-    do
-        array[${parm[i]}]=${parm[i+1]}
-    done
+def render_footer():
+    print('<a href="./home.cgi">Return to Homepage</a><br>')
 
-    register_voter
-fi
+def render_voting_page(invalid=False):
+    render_header()
+    if invalid:
+        print('<b>Invalid Arguments Passed!</b>')
+    print('<form method="get">')
+    print('<label for="name">Voter Name</label><br>')
+    print('<input type="text" id="name" name="name"><br>')
+    print('<label for="county">County</label><br>')
+    print('<input type="text" id="county" name="county"><br>')
+    print('<label for="zipc">ZIP Code</label><br>')
+    print('<input type="number" id="zipc" name="zipc"><br>')
+    print('<label for="dob">Date of Birth</label><br>')
+    print('<input type="date" id="dob" name="dob"><br>')
+    print('<input type="submit" value="Submit">')
+    print('</form>')
+    render_footer()
+
+def sanitize_input(str):
+    restricted_tags = ['script', 'img', 'href', 'svg', 'iframe', 'div']
+    for tag in restricted_tags:
+        ci = re.compile(re.escape(tag), re.IGNORECASE)
+        str = ci.sub('', str)
+    return str
 
 
+query_string = cgi.parse_qs(environ['QUERY_STRING'])
+
+if query_string:
+    voter_name = query_string.get('name',[''])[0]
+    county = query_string.get('county', [''])[0]
+    zipc = query_string.get('zipc', [''])[0]
+    dob = query_string.get('dob', [''])[0]
+    voter_name = sanitize_input(voter_name)
+    country = sanitize_input(county)
+    zipc = sanitize_input(zipc)
+    dob = sanitize_input(dob)
+    if voter_name and county and zipc and dob:
+        voter_id = subprocess.check_output([PATH_TO_MACHINE, 'add-voter', voter_name, county, zipc, dob]).decode('utf-8').rstrip()
+        if voter_id is not "0":
+            render_voting_page()
+            print('<b>Voter registered. ID: {} </b>'.format(voter_id))
+        else:
+            render_voting_page()
+            print('<b>Error in registering voter. Please try again.</b>')
+    else:
+        render_voting_page(invalid=True)
+else:
+    render_voting_page()
