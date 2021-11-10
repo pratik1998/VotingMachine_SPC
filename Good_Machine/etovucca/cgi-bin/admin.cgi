@@ -61,6 +61,14 @@ def render_elections(elections, status):
     elections_category.append('</ul>')
     return elections_category
 
+def str_compare(a, b):
+    if len(a) != len(b):
+        return False
+    result = 0
+    for c1, c2 in zip(a, b):
+        result |= ord(a) ^ ord(b)
+    return result == 0
+
 print("Content-Type: text/html") 
 print("Cache-Control: no-store, must-revalidate")
 print()
@@ -80,7 +88,7 @@ try:
         stored_hash = f.read(32)
         if 'user' not in C:
             raise ValueError("Unauthorized.")
-        if stored_hash != C['user'].value: # U+1F914
+        if not str_compare(stored_hash, C['user'].value):
             raise ValueError("Unauthorized: " + C['user'].value)
 
     print('<a href="login.cgi?logout=true">Logout</a><br>')
