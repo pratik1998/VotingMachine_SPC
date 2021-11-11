@@ -56,4 +56,12 @@ CREATE TABLE Vote (
   UNIQUE(voter,office)
 );
 
+DROP TABLE IF EXISTS AdminUser;
+CREATE TABLE AdminUser(
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(128) NOT NULL,
+  passwd VARCHAR(32) NOT NULL
+);
+INSERT INTO AdminUser(id,name,passwd) VALUES (1,'admin','21232f297a57a5a743894a0e4a801fc3');
+
 .quit

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import time
+
 import cgi
 import subprocess
 import json
@@ -12,20 +12,22 @@ PATH_TO_SQLITE = "./sqlite3"
 PATH_TO_DB = "rtbb.sqlite3"
 PATH_TO_PASSWD = "./machine_passwd"
 ID_SQL = 'SELECT id FROM Election WHERE deadline_day={} AND deadline_mon={} AND deadline_year={}'
-
+PW_SQL = "UPDATE AdminUser SET passwd ='{}' WHERE id={}"
+GPW_SQL = 'SELECT passwd FROM AdminUser WHERE id={}'
+redirectURL = "./login.cgi"
 
 def convert_date_to_id(date):
     # Please don't ever actually do this.
-    f = open('./example.log', 'a')
-    f.write(date)
     date_positions = date.split("-")
-    sql = ID_SQL.format(date_positions[2], date_positions[1], int(date_positions[0]) - 1900) # U+1F914
-    f.write(sql)
-    f.close()
-    election_id = int(subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql]))
+    try:
+        day_int = int(date_positions[2])
+        mon_int = int(date_positions[1])
+        year_int = int(date_positions[0])
+        sql = ID_SQL.format(day_int, mon_int, year_int - 1900)
+        election_id = int(subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql]))
+    except ValueError as e:
+        election_id = ''
     return election_id
-
-
 
 def render_elections(elections, status):
     elections_category = []
@@ -63,14 +65,13 @@ def render_elections(elections, status):
     elections_category.append('</ul>')
     return elections_category
 
-def str_compare(a, b):
-    if len(a) != len(b):
-        return False
-    result = 0
-    for c1, c2 in zip(a, b):
-        result |= ord(c1) ^ ord(c2)
-    return result == 0
-
+# def str_compare(a, b):
+#     if len(a) != len(b):
+#         return False
+#     result = 0
+#     for c1, c2 in zip(a, b):
+#         result |= ord(a) ^ ord(b)
+#     return result == 0
 
 print("Content-Type: text/html") 
 print("Cache-Control: no-store, must-revalidate")
@@ -87,12 +88,18 @@ try:
     C = SimpleCookie()
     C.load(environ['HTTP_COOKIE'])
     # Please don't ever actually do this.
-    with open(PATH_TO_PASSWD) as f:
-        stored_hash = f.read(32)
-        if 'user' not in C:
-            raise ValueError("Unauthorized.")
-        if not str_compare(stored_hash, C['user'].value):
-            raise ValueError("Unauthorized: " + C['user'].value)
+    id = "1";
+    sql = GPW_SQL.format(id)
+    stored_hash = subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql])
+    stored_hash = stored_hash.strip()
+    #with open(PATH_TO_PASSWD) as f:
+    #stored_hash = f.read(32)
+    if 'user' not in C:
+        raise ValueError("Unauthorized.")
+        # if not str_compare(stored_hash, C['user'].value):
+        #     raise ValueError("Unauthorized: " + C['user'].value)
+    if stored_hash.decode("utf-8") != C['user'].value:
+      	raise ValueError("Unauthorized: " + C['user'].value )
 
     print('<a href="login.cgi?logout=true">Logout</a><br>')
     
@@ -107,12 +114,13 @@ try:
                 subprocess.check_output([PATH_TO_MACHINE, 'publish-election', form.getvalue('id')])
             if form.getvalue('action') == 'deleted':
                 subprocess.check_output([PATH_TO_MACHINE, 'delete-election', form.getvalue('id')])
-            print('<b>Successfully set election {} to "{}".</b>'.format(form.getvalue('id'), form.getvalue('action')))
+                print('<b>Successfully set election {} to "{}".</b>'.format(form.getvalue('id'), form.getvalue('action')))
         elif 'addElection' in form:
-            subprocess.check_output('{} {} {}'.format(PATH_TO_MACHINE, 'add-election', form.getvalue('addElection')), shell=True)
-            print('<b>Successfully added election {}</b>'.format(form.getvalue('addElection')))
+             subprocess.check_output('{} {} {}'.format(PATH_TO_MACHINE, 'add-election', form.getvalue('addElection')), shell=True)
+             print('<b>Successfully added election {}</b>'.format(form.getvalue('addElection')))
         elif 'addOffice' in form:
             election_id = convert_date_to_id(form.getvalue('election'))
+            office_name = cgi.escape(form.getvalue('addOffice'))
             subprocess.check_output([PATH_TO_MACHINE, 'add-office', str(election_id), form.getvalue('addOffice')])
             print('<b>Successfully added {} to election {}</b>'.format(form.getvalue('addOffice'), form.getvalue('election')))
         elif 'addCandidate' in form:
@@ -122,12 +130,26 @@ try:
             subprocess.check_output([PATH_TO_MACHINE, 'add-zip', form.getvalue('office'), form.getvalue('addZip')])
             print('<b>Successfully added ZIP {} to office {}</b>'.format(form.getvalue('addZip'), form.getvalue('office')))
         elif 'newpasswd' in form:
+
             h = hashlib.new('md5')
+            id = "1"
             h.update(form.getvalue('newpasswd').encode('utf-8'))
-            f = open(PATH_TO_PASSWD, "w")
-            f.write(h.hexdigest())
-            f.close()
-            print('<b>Successfully reset password</b>')
+            nepw = h.hexdigest()
+            sql = PW_SQL.format(nepw, id)
+            subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql])
+            print('Content-Type: text/html')
+            print('Location: %s' % redirectURL)
+            print('')
+            print('<html>')
+            print('<head>')
+            print('<link rel="stylesheet" href="https://spar.isi.jhu.edu/teaching/443/main.css">')
+            print('<meta http-equiv="refresh" content="0;url=%s" />' % redirectURL)
+            print('<title>You are going to be redirected</title>')
+            print('</head>')
+            print('<body>')
+            print('Redirecting... <a href="%s">Click here if you are not redirected</a>' % redirectURL)
+            print('</body>')
+            print('</html>')
 
     json_elections = subprocess.check_output([PATH_TO_MACHINE, "get-elections"]).decode('utf-8')
     elections = json.loads(json_elections)
@@ -197,7 +219,7 @@ try:
     # reset password
     print('<h3>Reset Password</h3>')
     print('<form method="post">')
-    print('<label for="passwd">Admin New Password:</label>')
+    print('<label for="newpasswd">Admin New Password:</label>')
     print('<input type="password" id="newpasswd" name="newpasswd"><br>')
     print('<input type="submit" value="Reset">')
     print('</form>')
