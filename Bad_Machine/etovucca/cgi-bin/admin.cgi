@@ -65,13 +65,13 @@ def render_elections(elections, status):
     elections_category.append('</ul>')
     return elections_category
 
-# def str_compare(a, b):
-#     if len(a) != len(b):
-#         return False
-#     result = 0
-#     for c1, c2 in zip(a, b):
-#         result |= ord(a) ^ ord(b)
-#     return result == 0
+def str_compare(a, b):
+    if len(a) != len(b):
+        return False
+    result = 0
+    for c1, c2 in zip(a, b):
+        result |= ord(c1) ^ ord(c2)
+    return result == 0
 
 print("Content-Type: text/html") 
 print("Cache-Control: no-store, must-revalidate")
@@ -106,29 +106,34 @@ try:
     if len(form) != 0:
         # print('<b>{}</b><br>'.format(form))
         if 'action' in form:
-            if form.getvalue('action') == 'open':
+            action = cgi.escape(form.getvalue('action'))
+            if action == 'open':
                 subprocess.check_output([PATH_TO_MACHINE, 'open-election', form.getvalue('id')])
-            if form.getvalue('action') == 'closed':
+            if action == 'closed':
                 subprocess.check_output([PATH_TO_MACHINE, 'close-election', form.getvalue('id')])
-            if form.getvalue('action') == 'published':
+            if action == 'published':
                 subprocess.check_output([PATH_TO_MACHINE, 'publish-election', form.getvalue('id')])
-            if form.getvalue('action') == 'deleted':
+            if action == 'deleted':
                 subprocess.check_output([PATH_TO_MACHINE, 'delete-election', form.getvalue('id')])
-                print('<b>Successfully set election {} to "{}".</b>'.format(form.getvalue('id'), form.getvalue('action')))
+                print('<b>Successfully set election {} to "{}".</b>'.format(form.getvalue('id'), action))
         elif 'addElection' in form:
              subprocess.check_output('{} {} {}'.format(PATH_TO_MACHINE, 'add-election', form.getvalue('addElection')), shell=True)
              print('<b>Successfully added election {}</b>'.format(form.getvalue('addElection')))
         elif 'addOffice' in form:
             election_id = convert_date_to_id(form.getvalue('election'))
             office_name = cgi.escape(form.getvalue('addOffice'))
-            subprocess.check_output([PATH_TO_MACHINE, 'add-office', str(election_id), form.getvalue('addOffice')])
-            print('<b>Successfully added {} to election {}</b>'.format(form.getvalue('addOffice'), form.getvalue('election')))
+            subprocess.check_output([PATH_TO_MACHINE, 'add-office', str(election_id), office_name])
+            print('<b>Successfully added {} to election {}</b>'.format(office_name, form.getvalue('election')))
         elif 'addCandidate' in form:
-            subprocess.check_output([PATH_TO_MACHINE, 'add-candidate', form.getvalue('office'), form.getvalue('addCandidate')])
-            print('<b>Successfully added candidate {} to office {}</b>'.format(form.getvalue('addCandidate'), form.getvalue('office')))
+            candiate_name = cgi.escape(form.getvalue('addCandidate'))
+            office_name = cgi.escape(form.getvalue('office'))
+            subprocess.check_output([PATH_TO_MACHINE, 'add-candidate', office_name, candiate_name])
+            print('<b>Successfully added candidate {} to office {}</b>'.format(candiate_name, office_name))
         elif 'addZip' in form:
-            subprocess.check_output([PATH_TO_MACHINE, 'add-zip', form.getvalue('office'), form.getvalue('addZip')])
-            print('<b>Successfully added ZIP {} to office {}</b>'.format(form.getvalue('addZip'), form.getvalue('office')))
+            office_name = cgi.escape(form.getvalue('office'))
+            zip = cgi.escape(form.getvalue('addZip'))
+            subprocess.check_output([PATH_TO_MACHINE, 'add-zip', office_name, zip])
+            print('<b>Successfully added ZIP {} to office {}</b>'.format(zip, office_name))
         elif 'newpasswd' in form:
 
             h = hashlib.new('md5')
