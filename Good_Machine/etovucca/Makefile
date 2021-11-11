@@ -27,3 +27,6 @@ clean:
 
 initdb:
 		echo .quit | ./sqlite3 -init setup.sql rtbb.sqlite3
+
+exec:
+		sudo chmod -R 755 ./cgi-bin
