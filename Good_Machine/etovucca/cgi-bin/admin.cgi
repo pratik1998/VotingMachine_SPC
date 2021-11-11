@@ -94,10 +94,10 @@ try:
     stored_hash = stored_hash.strip()
     if 'user' not in C:
         raise ValueError("Unauthorized.")
-    #if not str_compare(stored_hash.decode("utf-8"), C['user'].value):
-    #    raise ValueError("Unauthorized: " + C['user'].value)
-    if stored_hash.decode("utf-8") != C['user'].value:
-       	raise ValueError("Unauthorized: " + C['user'].value )
+    if not str_compare(stored_hash.decode("utf-8"), C['user'].value):
+        raise ValueError("Unauthorized: " + C['user'].value)
+    #if stored_hash.decode("utf-8") != C['user'].value:
+     #  	raise ValueError("Unauthorized: " + C['user'].value )
 
     print('<a href="login.cgi?logout=true">Logout</a><br>')
     
