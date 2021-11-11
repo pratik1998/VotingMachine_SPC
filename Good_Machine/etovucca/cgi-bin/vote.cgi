@@ -23,6 +23,7 @@ def convert_date_to_id(date):
 
 
 print("Content-Type: text/html")
+print("X-Frame-Options: deny")
 print()
 print('<link rel="stylesheet" href="https://spar.isi.jhu.edu/teaching/443/main.css">')
 print('<h2 id="dlobeid-etovucca-voting-machine">DLOBEID EtovUcca Voting Machine</h2>')
