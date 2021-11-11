@@ -65,13 +65,13 @@ def render_elections(elections, status):
     elections_category.append('</ul>')
     return elections_category
 
-# def str_compare(a, b):
-#     if len(a) != len(b):
-#         return False
-#     result = 0
-#     for c1, c2 in zip(a, b):
-#         result |= ord(a) ^ ord(b)
-#     return result == 0
+def str_compare(a, b):
+    if len(a) != len(b):
+        return False
+    result = 0
+    for c1, c2 in zip(a, b):
+        result |= ord(c1) ^ ord(c2)
+    return result == 0
 
 print("Content-Type: text/html") 
 print("Cache-Control: no-store, must-revalidate")
@@ -88,17 +88,13 @@ try:
     C = SimpleCookie()
     C.load(environ['HTTP_COOKIE'])
     # Please don't ever actually do this.
-    id = "1";
+    id = "1"
     sql = GPW_SQL.format(id)
     stored_hash = subprocess.check_output([PATH_TO_SQLITE, PATH_TO_DB, sql])
     stored_hash = stored_hash.strip()
-    #with open(PATH_TO_PASSWD) as f:
-    #stored_hash = f.read(32)
     if 'user' not in C:
         raise ValueError("Unauthorized.")
-        # if not str_compare(stored_hash, C['user'].value):
-        #     raise ValueError("Unauthorized: " + C['user'].value)
-    if stored_hash.decode("utf-8") != C['user'].value:
+    if not str_compare(stored_hash.decode("utf-8"), C['user'].value):
       	raise ValueError("Unauthorized: " + C['user'].value )
 
     print('<a href="login.cgi?logout=true">Logout</a><br>')
@@ -135,7 +131,6 @@ try:
             subprocess.check_output([PATH_TO_MACHINE, 'add-zip', office_name, zip])
             print('<b>Successfully added ZIP {} to office {}</b>'.format(zip, office_name))
         elif 'newpasswd' in form:
-
             h = hashlib.new('md5')
             id = "1"
             h.update(form.getvalue('newpasswd').encode('utf-8'))
